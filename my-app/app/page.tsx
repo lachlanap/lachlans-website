@@ -9,17 +9,38 @@ export default function Home() {
     email: '',
     company: '',
   });
-  const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Waitlist submission:', formData);
-    setSubmitted(true);
-    setTimeout(() => {
-      setShowModal(false);
-      setSubmitted(false);
-      setFormData({ name: '', email: '', company: '' });
-    }, 2000);
+    setLoading(true);
+    setError('');
+
+    try {
+      // Call your API to create a Stripe checkout session
+      const response = await fetch('/api/create-checkout', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
+
+      const data = await response.json();
+
+      if (data.url) {
+        // Redirect to Stripe checkout
+        window.location.href = data.url;
+      } else {
+        setError('Something went wrong. Please try again.');
+        setLoading(false);
+      }
+    } catch (err) {
+      console.error('Error:', err);
+      setError('Failed to process. Please try again.');
+      setLoading(false);
+    }
   };
 
   return (
@@ -241,12 +262,28 @@ export default function Home() {
               </svg>
             </button>
 
-            {!submitted ? (
               <>
-                <h2 className="mb-2 text-3xl font-bold font-[var(--font-jakarta)]">Join the Waitlist</h2>
-                <p className="mb-8 text-black/60 font-[var(--font-inter)]">
-                  Be among the first to experience Horizon.
+                <h2 className="mb-2 text-3xl font-bold font-[var(--font-jakarta)]">Get Early Access</h2>
+                <p className="mb-6 text-black/60 font-[var(--font-inter)]">
+                  Secure your spot and be among the first to experience Horizon.
                 </p>
+
+                {/* Pricing Info */}
+                <div className="mb-6 bg-[#f8f6f1] rounded-2xl p-4 border border-black/10">
+                  <div className="flex items-baseline justify-center gap-2 mb-2">
+                    <span className="text-4xl font-bold font-[var(--font-jakarta)] text-[#ff6207]">$99</span>
+                    <span className="text-base font-[var(--font-inter)] text-black/60">one-time</span>
+                  </div>
+                  <p className="text-sm font-[var(--font-inter)] text-black/60 text-center">
+                    Lifetime early access • Priority support • Exclusive features
+                  </p>
+                </div>
+
+                {error && (
+                  <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl">
+                    <p className="text-sm font-[var(--font-inter)] text-red-600">{error}</p>
+                  </div>
+                )}
 
                 <form onSubmit={handleSubmit} className="space-y-5">
                   <div>
@@ -257,9 +294,10 @@ export default function Home() {
                       type="text"
                       id="name"
                       required
+                      disabled={loading}
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      className="w-full rounded-xl border border-black/20 bg-[#f8f6f1] px-4 py-3 font-[var(--font-inter)] focus:border-[#ff6207] focus:outline-none focus:ring-2 focus:ring-[#ff6207]/20"
+                      className="w-full rounded-xl border border-black/20 bg-[#f8f6f1] px-4 py-3 font-[var(--font-inter)] focus:border-[#ff6207] focus:outline-none focus:ring-2 focus:ring-[#ff6207]/20 disabled:opacity-50"
                       placeholder="John Doe"
                     />
                   </div>
@@ -272,9 +310,10 @@ export default function Home() {
                       type="email"
                       id="email"
                       required
+                      disabled={loading}
                       value={formData.email}
                       onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                      className="w-full rounded-xl border border-black/20 bg-[#f8f6f1] px-4 py-3 font-[var(--font-inter)] focus:border-[#ff6207] focus:outline-none focus:ring-2 focus:ring-[#ff6207]/20"
+                      className="w-full rounded-xl border border-black/20 bg-[#f8f6f1] px-4 py-3 font-[var(--font-inter)] focus:border-[#ff6207] focus:outline-none focus:ring-2 focus:ring-[#ff6207]/20 disabled:opacity-50"
                       placeholder="john@example.com"
                     />
                   </div>
@@ -287,34 +326,27 @@ export default function Home() {
                       type="text"
                       id="company"
                       required
+                      disabled={loading}
                       value={formData.company}
                       onChange={(e) => setFormData({ ...formData, company: e.target.value })}
-                      className="w-full rounded-xl border border-black/20 bg-[#f8f6f1] px-4 py-3 font-[var(--font-inter)] focus:border-[#ff6207] focus:outline-none focus:ring-2 focus:ring-[#ff6207]/20"
+                      className="w-full rounded-xl border border-black/20 bg-[#f8f6f1] px-4 py-3 font-[var(--font-inter)] focus:border-[#ff6207] focus:outline-none focus:ring-2 focus:ring-[#ff6207]/20 disabled:opacity-50"
                       placeholder="Acme Inc."
                     />
                   </div>
 
                   <button
                     type="submit"
-                    className="w-full h-14 bg-[#ff6207] text-white text-base font-semibold font-[var(--font-jakarta)] rounded-xl hover:bg-[#e26b08] transition-all shadow-lg shadow-[#ff6207]/20 hover:shadow-xl hover:scale-105"
+                    disabled={loading}
+                    className="w-full h-14 bg-[#ff6207] text-white text-base font-semibold font-[var(--font-jakarta)] rounded-xl hover:bg-[#e26b08] transition-all shadow-lg shadow-[#ff6207]/20 hover:shadow-xl hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
                   >
-                    Join Waitlist
+                    {loading ? 'Processing...' : 'Continue to Payment →'}
                   </button>
                 </form>
+
+                <p className="mt-4 text-xs font-[var(--font-inter)] text-black/50 text-center">
+                  Secure payment powered by Stripe
+                </p>
               </>
-            ) : (
-              <div className="py-8 text-center">
-                <div className="mb-4 flex justify-center">
-                  <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#ff6207]/20">
-                    <svg className="h-8 w-8 text-[#ff6207]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                    </svg>
-                  </div>
-                </div>
-                <h3 className="mb-2 text-2xl font-bold font-[var(--font-jakarta)]">You're on the list!</h3>
-                <p className="text-black/60 font-[var(--font-inter)]">We'll be in touch soon.</p>
-              </div>
-            )}
           </div>
         </div>
       )}
