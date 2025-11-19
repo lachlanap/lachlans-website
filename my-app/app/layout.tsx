@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Lachlan Phillips - Developer & Creator",
-  description: "Personal website of Lachlan Phillips",
+  title: "Horizon - The Future Awaits",
+  description: "Join the waitlist for Horizon. The next generation of innovation is coming.",
 };
 
 export default function RootLayout({
